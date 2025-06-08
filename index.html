@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek Tic Tac Toe</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --primary: #4285F4;
+            --secondary: #34A853;
+            --accent: #EA4335;
+            --dark: #202124;
+            --light: #f8f9fa;
+            --shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #4285F4, #34A853);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--light);
+            overflow: hidden;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            z-index: -1;
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        h1 {
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #EA4335, #FBBC05, #4285F4, #34A853);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .game-mode {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .mode-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .mode-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 10px;
+            margin: 2rem auto;
+            max-width: 300px;
+        }
+        
+        .cell {
+            aspect-ratio: 1/1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cell:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        .cell.x::before, .cell.x::after {
+            content: '';
+            position: absolute;
+            width: 70%;
+            height: 8px;
+            background-color: #EA4335;
+            border-radius: 5px;
+        }
+        
+        .cell.x::before {
+            transform: rotate(45deg);
+        }
+        
+        .cell.x::after {
+            transform: rotate(-45deg);
+        }
+        
+        .cell.o::before {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            border-radius: 50%;
+            border: 8px solid #4285F4;
+        }
+        
+        .status {
+            margin: 1.5rem 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .reset-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            margin-top: 1rem;
+        }
+        
+        .reset-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 50%;
+            animation: fall 5s linear infinite;
+            z-index: 1000;
+        }
+        
+        @keyframes fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .win-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            z-index: 1001;
+            color: var(--dark);
+            font-weight: 700;
+            font-size: 2rem;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .win-message.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        
+        .win-message button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 50px;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .win-message button:hover {
+            background: var(--secondary);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Sound toggle button */
+        .sound-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            z-index: 1002;
+        }
+
+        .sound-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .game-mode {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .cell {
+                font-size: 2.5rem;
+            }
+            
+            .win-message {
+                width: 90%;
+                font-size: 1.5rem;
+                padding: 1.5rem;
+            }
+
+            .sound-toggle {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="splashScreen" style="
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: url('https://iili.io/F2YuXyb.png') no-repeat center center;
+    background-size: cover;
+    z-index: 9999;
+    transition: opacity 1s ease;
+"></div>
+
+    <div class="container">
+        <h1>DeepSeek Tic Tac Toe</h1>
+        
+        <div class="game-mode">
+            <button class="mode-btn active" id="pvp">2 Players</button>
+            <button class="mode-btn" id="pvc">Player vs CPU</button>
+        </div>
+        
+        <div class="status" id="status">Player X's turn</div>
+        
+        <div class="game-board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        
+        <button class="reset-btn" id="reset">Reset Game</button>
+    </div>
+    
+    <div class="win-message" id="winMessage">
+        <div id="winText">Congratulations!</div>
+        <button id="playAgain">Play Again</button>
+    </div>
+
+    <!-- Sound toggle button -->
+    <button class="sound-toggle" id="soundToggle">🔊</button>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const board = document.getElementById('board');
+            const cells = document.querySelectorAll('.cell');
+            const status = document.getElementById('status');
+            const resetBtn = document.getElementById('reset');
+            const pvpBtn = document.getElementById('pvp');
+            const pvcBtn = document.getElementById('pvc');
+            const winMessage = document.getElementById('winMessage');
+            const winText = document.getElementById('winText');
+            const playAgainBtn = document.getElementById('playAgain');
+            const soundToggle = document.getElementById('soundToggle');
+            
+            let currentPlayer = 'X';
+            let gameState = ['', '', '', '', '', '', '', '', ''];
+            let gameActive = true;
+            let vsComputer = false;
+            let soundEnabled = true;
+            
+            // Sound effects
+            const sounds = {
+                click: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3'),
+                win: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3'),
+                draw: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-neutral-game-notification-951.mp3'),
+                reset: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-explosion-2759.mp3'),
+                switch: new Audio('https://assets.mixkit.co/sfx/preview/mixkit-modern-click-box-check-1120.mp3')
+            };
+
+            // Set volume for sounds
+            Object.values(sounds).forEach(sound => {
+                sound.volume = 0.3;
+            });
+            
+            // Winning conditions
+            const winningConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6] // diagonals
+            ];
+            
+            // Play sound function
+            function playSound(soundName) {
+                if (!soundEnabled) return;
+                const sound = sounds[soundName];
+                sound.currentTime = 0;
+                sound.play().catch(e => console.log("Sound playback prevented:", e));
+            }
+            
+            // Toggle sound function
+            function toggleSound() {
+                soundEnabled = !soundEnabled;
+                soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+                playSound('switch');
+                
+                // Show feedback
+                const feedback = document.createElement('div');
+                feedback.textContent = soundEnabled ? 'Sound ON' : 'Sound OFF';
+                feedback.style.position = 'fixed';
+                feedback.style.bottom = '80px';
+                feedback.style.right = '20px';
+                feedback.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                feedback.style.color = 'white';
+                feedback.style.padding = '5px 10px';
+                feedback.style.borderRadius = '5px';
+                feedback.style.fontSize = '14px';
+                document.body.appendChild(feedback);
+                
+                setTimeout(() => {
+                    feedback.style.opacity = '0';
+                    setTimeout(() => feedback.remove(), 500);
+                }, 1000);
+            }
+            
+            // Initialize the game
+            function initGame() {
+                gameState = ['', '', '', '', '', '', '', '', ''];
+                gameActive = true;
+                currentPlayer = 'X';
+                status.textContent = `Player ${currentPlayer}'s turn`;
+                
+                cells.forEach(cell => {
+                    cell.classList.remove('x', 'o');
+                    cell.textContent = '';
+                });
+                
+                winMessage.classList.remove('show');
+                playSound('reset');
+            }
+            
+            // Handle cell click
+            function handleCellClick(e) {
+                const clickedCell = e.target;
+                const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+                
+                if (gameState[clickedCellIndex] !== '' || !gameActive) return;
+                
+                gameState[clickedCellIndex] = currentPlayer;
+                clickedCell.classList.add(currentPlayer.toLowerCase());
+                playSound('click');
+                
+                checkResult();
+                
+                if (vsComputer && gameActive && currentPlayer === 'O') {
+                    setTimeout(makeComputerMove, 500);
+                }
+            }
+            
+            // Check game result
+            function checkResult() {
+                let roundWon = false;
+                
+                for (let i = 0; i < winningConditions.length; i++) {
+                    const [a, b, c] = winningConditions[i];
+                    
+                    if (gameState[a] === '' || gameState[b] === '' || gameState[c] === '') continue;
+                    
+                    if (gameState[a] === gameState[b] && gameState[b] === gameState[c]) {
+                        roundWon = true;
+                        break;
+                    }
+                }
+                
+                if (roundWon) {
+                    gameActive = false;
+                    winText.textContent = `Player ${currentPlayer} Wins!`;
+                    playSound('win');
+                    showWinMessage();
+                    return;
+                }
+                
+                if (!gameState.includes('')) {
+                    gameActive = false;
+                    winText.textContent = 'Game ended in a draw!';
+                    playSound('draw');
+                    showWinMessage();
+                    return;
+                }
+                
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                status.textContent = `Player ${currentPlayer}'s turn`;
+            }
+            
+            // Computer move logic
+            function makeComputerMove() {
+                if (!gameActive) return;
+                
+                let bestMove = -1;
+                bestMove = findWinningMove('O');
+                
+                if (bestMove === -1) {
+                    bestMove = findWinningMove('X');
+                }
+                
+                if (bestMove === -1 && gameState[4] === '') {
+                    bestMove = 4;
+                }
+                
+                if (bestMove === -1) {
+                    const corners = [0, 2, 6, 8];
+                    const availableCorners = corners.filter(index => gameState[index] === '');
+                    if (availableCorners.length > 0) {
+                        bestMove = availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                    }
+                }
+                
+                if (bestMove === -1) {
+                    const availableCells = gameState.map((cell, index) => cell === '' ? index : -1).filter(index => index !== -1);
+                    if (availableCells.length > 0) {
+                        bestMove = availableCells[Math.floor(Math.random() * availableCells.length)];
+                    }
+                }
+                
+                if (bestMove !== -1) {
+                    gameState[bestMove] = currentPlayer;
+                    cells[bestMove].classList.add(currentPlayer.toLowerCase());
+                    playSound('click');
+                    checkResult();
+                }
+            }
+            
+            // Find winning or blocking move
+            function findWinningMove(player) {
+                for (let i = 0; i < winningConditions.length; i++) {
+                    const [a, b, c] = winningConditions[i];
+                    const cellsInLine = [gameState[a], gameState[b], gameState[c]];
+                    
+                    const playerCount = cellsInLine.filter(cell => cell === player).length;
+                    const emptyCount = cellsInLine.filter(cell => cell === '').length;
+                    
+                    if (playerCount === 2 && emptyCount === 1) {
+                        if (gameState[a] === '') return a;
+                        if (gameState[b] === '') return b;
+                        if (gameState[c] === '') return c;
+                    }
+                }
+                return -1;
+            }
+            
+            // Show win message with confetti
+            function showWinMessage() {
+                winMessage.classList.add('show');
+                
+                if (winText.textContent.includes('Wins')) {
+                    createConfetti();
+                }
+            }
+            
+            // Create confetti effect
+            function createConfetti() {
+                const colors = ['#EA4335', '#FBBC05', '#4285F4', '#34A853'];
+                
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = confetti.style.width;
+                    confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                    confetti.style.animationDelay = Math.random() * 2 + 's';
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 5000);
+                }
+            }
+            
+            // Event listeners
+            cells.forEach(cell => {
+                cell.addEventListener('click', handleCellClick);
+            });
+            
+            resetBtn.addEventListener('click', initGame);
+            
+            pvpBtn.addEventListener('click', () => {
+                vsComputer = false;
+                pvpBtn.classList.add('active');
+                pvcBtn.classList.remove('active');
+                playSound('switch');
+                initGame();
+            });
+            
+            pvcBtn.addEventListener('click', () => {
+                vsComputer = true;
+                pvcBtn.classList.add('active');
+                pvpBtn.classList.remove('active');
+                playSound('switch');
+                initGame();
+            });
+            
+            playAgainBtn.addEventListener('click', () => {
+                winMessage.classList.remove('show');
+                initGame();
+            });
+
+            soundToggle.addEventListener('click', toggleSound);
+            
+            // Initialize the game
+            initGame();
+        });
+    </script>
+
+<audio id="backgroundMusic" autoplay loop>
+  <source src="background_music.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+
+
+<audio id="backgroundMusic" preload="auto" loop>
+  <source src="background_music.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const bgMusic = document.getElementById('backgroundMusic');
+        function enableMusic() {
+            if (bgMusic) {
+                bgMusic.play().catch(e => console.log("Playback blocked:", e));
+            }
+            document.removeEventListener('click', enableMusic);
+            document.removeEventListener('touchstart', enableMusic);
+        }
+        document.addEventListener('click', enableMusic);
+        document.addEventListener('touchstart', enableMusic);
+    });
+</script>
+
+
+
+<audio id="backgroundMusic" autoplay loop muted>
+  <source src="background_music.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+
+
+<button id="unmuteBtn" style="
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  z-index: 10002;
+">🔊 Unmute Music</button>
+
+</body>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const splash = document.getElementById('splashScreen');
+    const bgMusic = document.getElementById('backgroundMusic');
+    const unmuteBtn = document.getElementById('unmuteBtn');
+
+    // Start game after splash fades
+    setTimeout(() => {
+        splash.style.opacity = '0';
+        setTimeout(() => {
+            splash.style.display = 'none';
+            if (typeof initGame === 'function') initGame();
+            unmuteBtn.style.display = 'block';
+        }, 1000);
+    }, 2000);
+
+    // Unmute on click
+    unmuteBtn.addEventListener('click', () => {
+        if (bgMusic) {
+            bgMusic.muted = false;
+            bgMusic.volume = 0.5;
+            bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+            unmuteBtn.style.display = 'none';
+        }
+    });
+});
+</script>
+
+</html>
